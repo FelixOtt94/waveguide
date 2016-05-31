@@ -1,6 +1,6 @@
  
 CXX = g++
-CXXFLAGS = -O3 -Wall -Winline -Wshadow -Werror -std=c++11 -pedantic
+CXXFLAGS = -O3 -Wall -Wshadow -Werror -std=c++11 -pedantic
 
 INCLUDES =
 LDFLAGS =
