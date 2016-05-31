@@ -21,6 +21,8 @@ typedef struct{
   uint16_t v2;
 } face; 
 
+//typedef double (*func_t)(double, double);
+
 void readInput( point* points, face* faces ){
   double i, x, y;
   double v0, v1, v2;
@@ -76,7 +78,14 @@ void testK( point* points, double* k ){
     }
 }
 
-void computeA_M( point* points, face* faces, std::vector<std::map<double,int>> &matrixA, std::vector<std::map<double,int>> &matrixB ){
+double my_func(double x, double y){
+    double k = 0;
+    k = (100.0 + 0.01 )* std::exp( -50.0 * ((x*x) + (y*y)) ) - 100.0;
+    return k;
+}
+
+
+void computeA_M( point* points, face* faces, std::vector<std::map<double, uint16_t>> matrixA, std::vector<std::map<double, uint16_t>> matrixB){
 
     ELEMENTS::Triangle my_element;
     std::vector< std::vector< double > > my_local_matrixA;
@@ -95,12 +104,13 @@ void computeA_M( point* points, face* faces, std::vector<std::map<double,int>> &
         my_local_matrixM = my_element.integrate(func<double>(my_func) * v_() * w_());
 
         for(int k=0; k<3; k++){
-                matrixA[faces[i].v0].insert ( std::pair<double,int>(my_local_matrixA[k*3],faces[i].v0) );
-                matrixB[faces[i].v0].insert ( std::pair<double,int>(my_local_matrixB[k*3],faces[i].v0) );
-                matrixA[faces[i].v1].insert ( std::pair<double,int>(my_local_matrixA[k*3+1],faces[i].v1) );
-                matrixB[faces[i].v1].insert ( std::pair<double,int>(my_local_matrixB[k*3+1],faces[i].v1) );
-                matrixA[faces[i].v2].insert ( std::pair<double,int>(my_local_matrixA[k*3+2],faces[i].v2) );
-                matrixB[faces[i].v2].insert ( std::pair<double,int>(my_local_matrixB[k*3+2],faces[i].v2) );
+            //hier habe ich noch den zweiten [] Operator hinzugefuegt, damit wir ein double von my-local-matrix erhalten
+                matrixA[faces[i].v0].insert ( std::pair<double,uint16_t>(my_local_matrixA[k*3][1],faces[i].v0) );
+                matrixB[faces[i].v0].insert ( std::pair<double,uint16_t>(my_local_matrixM[k*3][1],faces[i].v0) );
+                matrixA[faces[i].v1].insert ( std::pair<double,uint16_t>(my_local_matrixA[k*3+1][1],faces[i].v1) );
+                matrixB[faces[i].v1].insert ( std::pair<double,uint16_t>(my_local_matrixM[k*3+1][1],faces[i].v1) );
+                matrixA[faces[i].v2].insert ( std::pair<double,uint16_t>(my_local_matrixA[k*3+2][1],faces[i].v2) );
+                matrixB[faces[i].v2].insert ( std::pair<double,uint16_t>(my_local_matrixM[k*3+2][1],faces[i].v2) );
         }
 
     }
@@ -109,11 +119,8 @@ void computeA_M( point* points, face* faces, std::vector<std::map<double,int>> &
 
 }
 
-double my_func(double x, double y){
-    double k = 0;
-    k = (100.0 + 0.01 )* std::exp( -50.0 * ((x*x) + (y*y)) ) - 100.0;
-    return k;
-}
+
+
 
 int main( int args, char** argv ){
   
@@ -129,8 +136,8 @@ int main( int args, char** argv ){
   double k[1039];
 
   // matrices
-  std::vector<std::map<double,int>> matrixA(1039);
-  std::vector<std::map<double,int>> matrixM(1039);
+  std::vector< std::map<double, uint16_t> > matrixA(1039);
+  std::vector< std::map<double, uint16_t> > matrixM(1039);
 
   
   delta = atof( argv[1] );
@@ -140,7 +147,7 @@ int main( int args, char** argv ){
   
   setK( points, k, delta );
 
-  computeA_M( points, faces, matrixA, matrixM );
+ computeA_M( points, faces, matrixA, matrixM);
   
   testK( points, k );
   exit( EXIT_SUCCESS );
