@@ -6,6 +6,8 @@
 #include <string>
 #include <cmath>
 #include "Source/Colsamm.h"
+using namespace ::_COLSAMM_;
+
 
 typedef struct{
   double x;
@@ -72,6 +74,31 @@ void testK( point* points, double* k ){
       }
     }
 }
+
+void computeA_M( point* points, face* faces ){
+
+    ELEMENTS::Triangle my_element;
+    /*std::vector< std::vector< double > > my_local_matrix;
+
+    std::vector<double> corners(6, 0.0);
+
+    for(int i=0; i<1977; i++){
+        corners[0] = points[faces[i].v0].x; corners[1] = points[faces[i].v0].y;
+        corners[2] = points[faces[i].v1].x; corners[3] = points[faces[i].v0].y;
+        corners[4] = points[faces[i].v2].x; corners[5] = points[faces[i].v0].y;
+        my_element(corners);
+
+
+        //my_local_matrix = my_element.integrate(grad(v_()) * grad(w_()));
+
+
+    }
+
+*/
+
+}
+
+//double my_func(double x, double y);
 
 int main( int args, char** argv ){
   
