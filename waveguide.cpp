@@ -21,6 +21,33 @@ typedef struct{
 
 //typedef double (*func_t)(double, double);
 
+// computes the residuum of grid and f_x_y with the given stencile for a single nodes
+double residuumSingle(double* __restrict grid, double* __restrict f_x_y, double stencile_hor, double stencile_vert, double stencile_mid, int nx, int ny){
+    double residuum = 0.0;
+    double sum = 0.0;
+
+    for(int i=1; i<ny-1; i++){
+        for(int k=1; k<nx-1; k++){
+            double temp =  f_x_y[i*nx+k] - (stencile_vert*(grid[i*nx+(k-1)]+grid[i*nx+(k+1)]) + stencile_hor*(grid[(i-1)*nx+k]+grid[(i+1)*nx+k]) + (stencile_mid*grid[i*nx+k]));
+            sum += temp*temp;
+        }
+    }
+    residuum = sqrt( sum / ((double)((nx-2)*(ny-2))));
+    return residuum;
+}
+
+// computes the skalarprodukt of a and b. nx and ny are the hole number of points in x/y-dimension
+double skalarprodukt(double* __restrict a, double* __restrict b, int nx, int ny){
+    double skalarprodukt = 0;
+
+    for(int i=1; i<ny-1; i++){
+        for(int j=1; j<nx-1; j++){
+            skalarprodukt += a[i*nx+j] * b[i*nx+j];
+        }
+    }
+    return skalarprodukt;
+}
+
 void readInput( point* points, face* faces ){
   double i, x, y;
   double v0, v1, v2;
