@@ -19,33 +19,29 @@ typedef struct{
   uint16_t v[3];
 } face; 
 
-//typedef double (*func_t)(double, double);
 
-// computes the residuum of grid and f_x_y with the given stencile for a single nodes
-double residuumSingle(double* __restrict grid, double* __restrict f_x_y, double stencile_hor, double stencile_vert, double stencile_mid, int nx, int ny){
-    double residuum = 0.0;
-    double sum = 0.0;
-
-    for(int i=1; i<ny-1; i++){
-        for(int k=1; k<nx-1; k++){
-            double temp =  f_x_y[i*nx+k] - (stencile_vert*(grid[i*nx+(k-1)]+grid[i*nx+(k+1)]) + stencile_hor*(grid[(i-1)*nx+k]+grid[(i+1)*nx+k]) + (stencile_mid*grid[i*nx+k]));
-            sum += temp*temp;
-        }
-    }
-    residuum = sqrt( sum / ((double)((nx-2)*(ny-2))));
-    return residuum;
-}
 
 // computes the skalarprodukt of a and b. nx and ny are the hole number of points in x/y-dimension
-double skalarprodukt(double* __restrict a, double* __restrict b, int nx, int ny){
-    double skalarprodukt = 0;
+double skalarprodukt(std::vector<double>& a, std::vector<double>&  b){
+    double skalarprodukt = 0.0;
 
-    for(int i=1; i<ny-1; i++){
-        for(int j=1; j<nx-1; j++){
-            skalarprodukt += a[i*nx+j] * b[i*nx+j];
-        }
+    for(int i=0; i<1039; i++){
+            skalarprodukt += a[i] * b[i];
+        
     }
     return skalarprodukt;
+}
+
+// calculates the l2-norm of the residual
+double residuum( std::vector<double> &r) {
+	double residuum = 0.0;
+	double sum = 0.0;
+	for (int i = 0; i < 1039; i++) {
+			sum += r[i] * r[i];
+		
+	}
+	residuum = sqrt( sum) / 1039;
+	return residuum;
 }
 
 void readInput( point* points, face* faces ){
@@ -150,103 +146,77 @@ void computeA_M( point* points, face* faces, std::vector<std::map<uint16_t, doub
 
 }
 
-void Jaccobi(  std::vector<std::map<uint16_t, double>>& u,
-	       std::vector<std::map<uint16_t, double>>& matrixA,
-	       std::vector<std::map<uint16_t, double>>& u_neu, 
-	       std::vector<std::map<uint16_t, double>>& f, 
-	       double h, double epsilon){
-
-  double tmp = 0.0;
-  int count = 0;
-	for (int iterations = 0; iterations<numIterations; iterations++){
-		for (int m = 1; m<1039; m++){
-			for (std::map<uint16_t, double>::iterator it=matrixA[i].begin(); it!=matrixA[i].end(); ++it){
-			  tmp += it->second * u[it->first];
-			  count++;
-				//u_neu(q, m) = (1.0 / 4.0) * (h*h*f(q, m) + (u(q - 1, m) + u(q + 1, m) + u(q, m - 1) + u(q, m + 1)));
-			}
-			tmp += f[m];
-			u_neu[m] = tmp / count;
-			tmp =0.0;
-			count= 0;
-		}
-	}
-
-
-    
-
-}
 
 void cg(std::vector<double>&  f_x_y,
 	std::vector<double>& grid, 
 	std::vector<std::map<uint16_t, double>>& matrixA,
-	double epsilon,){
+	double epsilon){
   
     double alpha = 0.0;
     double delta_1 = 0.0;
     double betta = 0.0;
     double delta_0 = 0.0;
     double tmp = 0.0;
-    std::vector<double>&  r(1039);
-    std::vector<double>&  d(1039);
-    std::vector<double>&  z(1039);
+    std::vector<double>  r(1039);
+    std::vector<double> d(1039);
+    std::vector<double> z(1039);
 
     // 1)
     for(int i=0; i<1039; i++){
       for (std::map<uint16_t, double>::iterator it=matrixA[i].begin(); it!=matrixA[i].end(); ++it){
-			  tmp += it->second * u[it->first];
+			  tmp += it->second * grid[it->first];
       }
       r[i] = f_x_y[i] - tmp;
+      tmp = 0.0;
     }
 
     // 2)
-    delta_0 = skalarprodukt(r, r, nx, ny);
+    delta_0 = skalarprodukt(r, r);
 
     // 3)
-    if(residuumSingle(grid, f_x_y, stencile_hor, stencile_vert, stencile_mid, nx, ny) < epsilon){
-        cout << "number of needed iterations: 0" << endl;
+    if(residuum(r) < epsilon){
+        std::cout << "number of needed iterations: 0" << std::endl;
         return;
     }
 
     // 4)
-    for(int i=1; i<ny-1; i++){
-        for(int j=1; j<nx-1; j++){
-            d[i*nx+j] = r[i*nx+j];
-        }
+    for(int i=0; i<1039; i++){
+            d[i] = r[i];
+
     }
 
     // 5-15)
-    for(int k=1; k<=c; k++){
+    for(int k=1; k<=1000000000; k++){
         // 6)
-        for(int i=1; i<ny-1; i++){
-            for(int j=1; j<nx-1; j++){
-                z[i*nx+j] = stencile_vert*(d[i*nx+(j-1)]+d[i*nx+(j+1)]) + stencile_hor*(d[(i-1)*nx+j]+d[(i+1)*nx+j]) + (stencile_mid*d[i*nx+j]);
-            }
+        for(int i=0; i<1039; i++){
+	            for (std::map<uint16_t, double>::iterator it=matrixA[i].begin(); it!=matrixA[i].end(); ++it){
+			  tmp += it->second * d[it->first];
+	    }
+                z[i] = tmp;
+           
         }
 
         // 7)
-        alpha = delta_0 / skalarprodukt(d, z, nx, ny);
+        alpha = delta_0 / skalarprodukt(d, z);
 
         // 8)
-        for(int i=1; i<ny-1; i++){
-            for(int j=1; j<nx-1; j++){
-                grid[i*nx+j] = grid[i*nx+j] + alpha * d[i*nx+j];
-            }
+        for(int i=0; i<1039; i++){
+                grid[i] = grid[i] + alpha * d[i];
+            
         }
 
         // 9)
-        for(int i=1; i<ny-1; i++){
-            for(int j=1; j<nx-1; j++){
-                r[i*nx+j] = r[i*nx+j] - alpha * z[i*nx+j];
-            }
+        for(int i=0; i<1039; i++){
+                r[i] = r[i] - alpha * z[i];
+            
         }
 
         // 10)
-        delta_1 = skalarprodukt(r, r, nx, ny);
+        delta_1 = skalarprodukt(r, r);
 
         // 11)
-        if(residuumSingle(grid, f_x_y, stencile_hor, stencile_vert, stencile_mid, nx, ny) < epsilon){
-            cout << "number of needed iterations: " << k << endl;
+        if(residuum(r) < epsilon){
+            std::cout << "number of needed iterations: " << k << std::endl;
             return;
         }
 
@@ -254,17 +224,15 @@ void cg(std::vector<double>&  f_x_y,
         betta = delta_1/delta_0;
 
         // 13)
-        for(int i=1; i<ny-1; i++){
-            for(int j=1; j<nx-1; j++){
-                int a = i*nx+j;
-                d[a] = r[a] + betta * d[a];
-            }
+        for(int i=0; i<1039; i++){
+                d[i] = r[i] + betta * d[i];
+            
         }
 
         // 14)
         delta_0 = delta_1;
     }
-    cout << "number of needed iterations: " << c << endl;
+    std::cout << "number of needed iterations: " << 100000000 << std::endl;
 }
 
 void printMat( std::string name, int dim, std::vector<std::map<uint16_t, double>>& matrix ){
