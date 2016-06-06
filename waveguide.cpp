@@ -150,6 +150,86 @@ void Jaccobi(  std::vector<std::map<uint16_t, double>>& &u,
 
 }
 
+void cg_serial(double* __restrict f_x_y, double* __restrict grid, int nx, int ny, double stencile_hor, double stencile_vert, double stencile_mid, double* __restrict r, double epsilon, double* __restrict d, int c, double* __restrict z){
+    double alpha = 0.0;
+    double delta_1 = 0.0;
+    double betta = 0.0;
+    double delta_0 = 0.0;
+
+    // 1)
+    for(int i=1; i<ny-1; i++){
+        for(int j=1; j<nx-1; j++){
+            r[i*nx+j] = f_x_y[i*nx+j] - (stencile_vert*(grid[i*nx+(j-1)]+grid[i*nx+(j+1)]) + stencile_hor*(grid[(i-1)*nx+j]+grid[(i+1)*nx+j]) + (stencile_mid*grid[i*nx+j]));
+        }
+    }
+
+    // 2)
+    delta_0 = skalarprodukt(r, r, nx, ny);
+
+    // 3)
+    if(residuumSingle(grid, f_x_y, stencile_hor, stencile_vert, stencile_mid, nx, ny) < epsilon){
+        cout << "number of needed iterations: 0" << endl;
+        return;
+    }
+
+    // 4)
+    for(int i=1; i<ny-1; i++){
+        for(int j=1; j<nx-1; j++){
+            d[i*nx+j] = r[i*nx+j];
+        }
+    }
+
+    // 5-15)
+    for(int k=1; k<=c; k++){
+        // 6)
+        for(int i=1; i<ny-1; i++){
+            for(int j=1; j<nx-1; j++){
+                z[i*nx+j] = stencile_vert*(d[i*nx+(j-1)]+d[i*nx+(j+1)]) + stencile_hor*(d[(i-1)*nx+j]+d[(i+1)*nx+j]) + (stencile_mid*d[i*nx+j]);
+            }
+        }
+
+        // 7)
+        alpha = delta_0 / skalarprodukt(d, z, nx, ny);
+
+        // 8)
+        for(int i=1; i<ny-1; i++){
+            for(int j=1; j<nx-1; j++){
+                grid[i*nx+j] = grid[i*nx+j] + alpha * d[i*nx+j];
+            }
+        }
+
+        // 9)
+        for(int i=1; i<ny-1; i++){
+            for(int j=1; j<nx-1; j++){
+                r[i*nx+j] = r[i*nx+j] - alpha * z[i*nx+j];
+            }
+        }
+
+        // 10)
+        delta_1 = skalarprodukt(r, r, nx, ny);
+
+        // 11)
+        if(residuumSingle(grid, f_x_y, stencile_hor, stencile_vert, stencile_mid, nx, ny) < epsilon){
+            cout << "number of needed iterations: " << k << endl;
+            return;
+        }
+
+        // 12)
+        betta = delta_1/delta_0;
+
+        // 13)
+        for(int i=1; i<ny-1; i++){
+            for(int j=1; j<nx-1; j++){
+                int a = i*nx+j;
+                d[a] = r[a] + betta * d[a];
+            }
+        }
+
+        // 14)
+        delta_0 = delta_1;
+    }
+    cout << "number of needed iterations: " << c << endl;
+}
 
 void printMat( std::string name, int dim, std::vector<std::map<uint16_t, double>>& matrix ){
   std::ofstream out( name );
