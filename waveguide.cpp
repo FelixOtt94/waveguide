@@ -123,7 +123,7 @@ void computeA_M( point* points, face* faces, std::vector<std::map<uint16_t, doub
 
 }
 
-void Jaccobi(  std::vector<std::map<uint16_t, double>>& &u,
+void Jaccobi(  std::vector<std::map<uint16_t, double>>& u,
 	       std::vector<std::map<uint16_t, double>>& matrixA,
 	       std::vector<std::map<uint16_t, double>>& u_neu, 
 	       std::vector<std::map<uint16_t, double>>& f, 
@@ -150,17 +150,26 @@ void Jaccobi(  std::vector<std::map<uint16_t, double>>& &u,
 
 }
 
-void cg_serial(double* __restrict f_x_y, double* __restrict grid, int nx, int ny, double stencile_hor, double stencile_vert, double stencile_mid, double* __restrict r, double epsilon, double* __restrict d, int c, double* __restrict z){
+void cg(std::vector<double>&  f_x_y,
+	std::vector<double>& grid, 
+	std::vector<std::map<uint16_t, double>>& matrixA,
+	double epsilon,){
+  
     double alpha = 0.0;
     double delta_1 = 0.0;
     double betta = 0.0;
     double delta_0 = 0.0;
+    double tmp = 0.0;
+    std::vector<double>&  r(1039);
+    std::vector<double>&  d(1039);
+    std::vector<double>&  z(1039);
 
     // 1)
-    for(int i=1; i<ny-1; i++){
-        for(int j=1; j<nx-1; j++){
-            r[i*nx+j] = f_x_y[i*nx+j] - (stencile_vert*(grid[i*nx+(j-1)]+grid[i*nx+(j+1)]) + stencile_hor*(grid[(i-1)*nx+j]+grid[(i+1)*nx+j]) + (stencile_mid*grid[i*nx+j]));
-        }
+    for(int i=0; i<1039; i++){
+      for (std::map<uint16_t, double>::iterator it=matrixA[i].begin(); it!=matrixA[i].end(); ++it){
+			  tmp += it->second * u[it->first];
+      }
+      r[i] = f_x_y[i] - tmp;
     }
 
     // 2)
